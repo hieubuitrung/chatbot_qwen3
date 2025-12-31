@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Popup</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <!-- KaTeX CSS for math rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    
+    <link rel="stylesheet" media="screen" href="./style.css">
+</head>
+<body>
+    <!-- Nút mở chatbot -->
+    <button type="button" class="chat-button" id="chatButton">
+        <i class="fas fa-comment-dots"></i>
+    </button>
+
+    <!-- Popup chatbot -->
+    <div class="chat-popup" id="chatPopup">
+        <div class="chat-header d-flex justify-content-between align-items-center">
+            <div>
+                <h5>AI Assistant</h5>
+                <p>Hỏi đáp và hỗ trợ</p>
+            </div>
+            <button type="button" class="close-btn" id="closeBtn">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot">
+                <div class="message-content">
+                    Xin chào! Tôi có thể giúp gì cho bạn hôm nay?
+                </div>
+            </div>
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        </div>
+
+        <div class="chat-input">
+            <div class="d-flex gap-2 align-items-center">
+                <button type="button" class="action-btn" id="voiceBtn" title="Ghi âm giọng nói">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                
+                <div class="input-wrapper flex-grow-1">
+                    <div class="d-flex gap-2 align-items-center">
+                        <textarea 
+                            class="form-control border-0 flex-grow-1"
+                            id="messageInput" 
+                            placeholder="Nhập câu hỏi của bạn..."
+                            rows="1"
+                        ></textarea>
+                        <div class="d-flex gap-1">
+                            <button type="button" class="action-btn" id="attachFileBtn" title="Đính kèm file">
+                                <i class="fas fa-paperclip"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="button" class="send-btn" id="sendBtn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+                <button type="button" class="send-btn d-none" id="stopBtn">
+                    <i class="fas fa-stop"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <!-- Marked.js for Markdown -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/11.1.1/marked.min.js"></script>
+    <!-- KaTeX JS for math rendering -->
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+    <script charset="utf-8" src="./script.js"></script>
+</body>
+</html>
