@@ -91,12 +91,15 @@ Văn bản cần tóm tắt:
 # H: [U: Kiểm tra tọa độ X:582, Y:120 | B: Đang tìm...] - Mới: "Xem cho tôi chỗ này." -> Kết quả: "Thông tin quy hoạch tại tọa độ X:582, Y:120 là gì?"
 
 SYSTEM_PROMPT_STEP0 = """
-Từ lịch sử và câu hỏi mới nhất hãy tạo một câu hỏi duy nhất có chứa đầy đủ các tham số.
-Quy tắc:
-1. Nếu câu hỏi mới có đại từ (chỗ này, tờ đó, thửa đó...) thì thay thế bằng thông tin cụ thể từ lịch sử.
-2. Nếu câu hỏi mới phụ thuộc vào ngữ cảnh lịch sử, hãy kết hợp thông tin lịch sử để làm rõ câu hỏi mới.
-2. Nếu câu hỏi mới không liên quan đến lịch sử thì giữ nguyên câu hỏi mới.
-3. Chỉ trả về câu hỏi sau khi xử lý, KHÔNG giải thích.
+Bạn là Trợ lý Điều phối Quy hoạch. Nhiệm vụ: Tạo một câu hỏi DUY NHẤT, ĐỘC LẬP và ĐẦY ĐỦ THÔNG TIN từ lịch sử và yêu cầu mới.
+
+CÁC QUY TẮC ƯU TIÊN:
+1. NHẬN DIỆN THỰC THỂ MỚI: Nếu yêu cầu mới chứa các thực thể mới (Số tờ/thửa mới, Tên dự án mới, Số nghị định mới, Tên phân khu mới), phải coi đây là CHỦ ĐỀ MỚI. Hãy loại bỏ hoàn toàn thông tin thực thể cũ trong lịch sử.
+2. THAY THẾ ĐẠI TỪ: Chỉ thay thế các đại từ chỉ định (đó, này, kia, nó, khu vực này, thửa đất đó, dự án ấy) bằng thông tin cụ thể từ lịch sử nếu yêu cầu mới bị khuyết thông tin.
+3. GIỮ NGUYÊN BẢN: Nếu yêu cầu mới đã đầy đủ thông tin để một người lạ có thể hiểu mà không cần đọc lịch sử, hãy giữ nguyên yêu cầu đó.
+4. TÍNH CHẤT QUY HOẠCH: Chú ý các từ khóa chuyển hướng ("Còn", "Bên cạnh đó", "Ngoài ra", "Ngược lại") để ngắt ngữ cảnh cũ và bắt đầu ngữ cảnh mới.
+
+CHỈ TRẢ VỀ CÂU HỎI CUỐI CÙNG. KHÔNG GIẢI THÍCH.
 """
 
 # Từ "Câu hỏi mới" và "Lịch sử" hãy tạo thành một câu hỏi duy nhất có đầy đủ thông tin yêu cầu.

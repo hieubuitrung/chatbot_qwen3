@@ -38,7 +38,6 @@ def get_model_and_tokenizer(model_path: str) -> Tuple[AutoModelForCausalLM, Auto
 
     # Model: chọn device_map tự động nếu có CUDA
     has_cuda = torch.cuda.is_available()
-    print(f"Phát hiện CUDA: {has_cuda}")
     device_map = "auto" if has_cuda else "cpu"
 
     _model = AutoModelForCausalLM.from_pretrained(

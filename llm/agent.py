@@ -81,18 +81,32 @@ class FunctionAgent:
         if not history:
             return new_user_input
 
-        # Giữ nguyên cấu trúc role, chỉ lấy 2 lượt gần nhất
-        recent_history = history[-2:]  # Giữ nguyên dict {"role": ..., "content": ...}
-        
-        # Gắn system prompt (nếu có) — nên tách riêng!
-        messages = [{"role": "system", "content": SYSTEM_PROMPT["rewrite_query"].strip()}]
-        messages.extend(recent_history)
-        messages.append({"role": "user", "content": new_user_input})
+        # Lấy 4 lượt gần nhất (2 cặp User-AI) là đủ để hiểu đại từ
+        # 6 lượt có thể khiến model 4B bị nhiễu thông tin cũ
+        recent_history = history[-4:] 
 
-        print("Message step 0: ", messages)
+        # Gom lịch sử thành một khối văn bản để LLM dễ bao quát
+        history_str = ""
+        for msg in recent_history:
+            role_label = "Người dùng" if msg["role"] == "user" else "Trợ lý"
+            history_str += f"{role_label}: {msg['content']}\n"
+
+        # Tạo prompt theo dạng Instruction rõ ràng
+        user_content = f"--- LỊCH SỬ ---\n{history_str}\n\n--- CÂU HỎI MỚI ---\n{new_user_input}"
+
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT["rewrite_query"].strip()},
+            {"role": "user", "content": user_content}
+        ]
+
+        # Debug để kiểm tra format gửi đi
+        # print("Message step 0: ", messages)
 
         standalone_query = self.llm_generate(messages, max_tokens=256)
-        return standalone_query.strip()
+        
+        # Xử lý trường hợp model 4B lặp lại tiền tố thừa
+        final_query = standalone_query.strip()
+        return final_query.strip()
 
     
     def select_function(self, history, user_query: str) -> str:

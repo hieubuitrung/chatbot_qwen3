@@ -100,6 +100,21 @@ def build_index_once(
 
     loaded_flag[flag_name] = True
 
+# xử lý giá trị 
+def clean_val(val, default="Đang cập nhật"):
+    # Nếu là None hoặc không phải chuỗi
+    if val is None:
+        return default
+    
+    # Ép kiểu về string và xóa khoảng trắng 2 đầu
+    str_val = str(val).strip()
+    
+    # Nếu là chuỗi rỗng sau khi strip hoặc là chữ "none" (thường gặp trong db)
+    if str_val == "" or str_val.lower() == "none":
+        return default
+        
+    return str_val
+
 # function tra cứu theo mã
 def tra_cuu_thua(json: dict) -> Dict[str, Any]:
     """
@@ -167,13 +182,13 @@ def tra_cuu_thua(json: dict) -> Dict[str, Any]:
         data_out = {
             "soto": to_ban_do_norm,
             "sothua": ma_thua_norm,
-            "dientich": props.get("dientich"),
-            "maloaidat": props.get("maloaidat"),
-            "diachithua": props.get("diachithua"),
-            "duongthua": props.get("duongthua"),
-            "chusudung": props.get("chusudung1"),
-            "diachi_csd": props.get("diachi_csd"),
-            "ghichu": props.get("ghichu"),
+            "dientich": clean_val(props.get("dientich")),
+            "maloaidat": clean_val(props.get("maloaidat")),
+            "diachithua": clean_val(props.get("diachithua")),
+            "duongthua": clean_val(props.get("duongthua")),
+            "chusudung": clean_val(props.get("chusudung1"), default="Chưa xác định"),
+            "diachi_csd": clean_val(props.get("diachi_csd")),
+            "ghichu": clean_val(props.get("ghichu"), default="Không có ghi chú"),
             **hc
         }
 
