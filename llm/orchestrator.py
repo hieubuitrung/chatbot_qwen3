@@ -20,6 +20,9 @@ class Orchestrator:
     def resolve_params(self, fn, extracted_params, state):
         fn_info = self.agent.find_function(fn)
 
+        if (fn_info is None):
+            return {}, []
+
         valid_params = fn_info["parameters"].keys()
         required_params = fn_info.get("required", [])
 
@@ -35,7 +38,6 @@ class Orchestrator:
                 final_params[p] = extracted_params[p]
             elif state_entities.get(p) is not None:
                 final_params[p] = state_entities[p]
-
 
         missing = [
             p for p in required_params
@@ -83,11 +85,13 @@ class Orchestrator:
 
         # STEP 1: chọn function
         fn = self.agent.select_function(history[:-1], user_query)
-
+        
         print("step 1: ", fn)
 
+        is_fn = self.agent.find_function(fn)
+
         # Không có function phù hợp → chỉ chat bình thường
-        if not fn or fn == "none":
+        if not fn or fn == "none" or is_fn is None:
             full_answer = "Xin lỗi, nhưng câu hỏi của bạn không thuộc phạm vi trách nhiệm của tôi. Nếu bạn cần hỗ trợ về lĩnh vực quy hoạch của tỉnh Khánh Hòa, hãy cho tôi biết!"
             self.state.add_assistant_message(full_answer)
             return full_answer
