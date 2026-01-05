@@ -135,7 +135,7 @@ QUY TẮC:
 1. Chỉ trích xuất thông tin có trong câu hỏi.
 2. Danh sách tham số cần trích xuất: {param_list}
 3. BẮT BUỘC chỉ trả về định dạng JSON. 
-4. Nếu tham số nào không có trong câu hỏi, hãy để giá trị là "null".
+4. Nếu tham số nào không có trong câu hỏi, hãy để giá trị là null.
 5. Không giải thích, không thêm văn bản ngoài JSON.
 """
 
