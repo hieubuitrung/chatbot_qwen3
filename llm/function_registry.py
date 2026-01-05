@@ -367,7 +367,7 @@ functions = [
             "ma_thua": {"type": "string", "description": "Thửa/mã thửa (Ví dụ: 123)"},
             "to_ban_do": {"type": "string", "description": "Tờ/tờ bản đồ (Ví dụ: 50)"}
         },
-        "required": ["ma_thua", "to_ban_do"],
+        "required": ["to_ban_do"],
         "callable": tra_cuu_thua,
         "suggestion_templates": [
             "Tra cứu các thửa đất liền kề với thửa {ma_thua} tờ {to_ban_do}",
