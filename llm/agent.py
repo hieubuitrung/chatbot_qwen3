@@ -203,7 +203,8 @@ class FunctionAgent:
         recent_history = state_manager.conversation["history"][-7:-1]
         messages = [{"role": "system", "content": system_prompt},
                     *recent_history,
-                    {"role": "user", "content": user_query}]
+                    # {"role": "user", "content": user_query}
+                    ]
 
         print("Messages step 3: ", messages)
         tokenized = self.tokenizer.apply_chat_template(

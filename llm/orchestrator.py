@@ -79,12 +79,12 @@ class Orchestrator:
 
         # STEP 0: chuyển câu hỏi mới thành câu đơn nhất
 
-        # user_query = self.agent.rewrite_query(history[:-1], user_query)
+        user_query = self.agent.rewrite_query(history[:-1], user_query)
 
-        # print("step 0: ", user_query)
+        print("step 0: ", user_query)
 
         # STEP 1: chọn function
-        fn = self.agent.select_function(history[:-1], user_query)
+        fn = self.agent.select_function([], user_query)
         
         print("step 1: ", fn)
 
@@ -109,7 +109,7 @@ class Orchestrator:
 
         params = {}
         if valid_params:
-            params = self.agent.extract_params(fn, history[:-1], user_query)
+            params = self.agent.extract_params(fn, [], user_query)
 
         print("step 2: ", params)
 
