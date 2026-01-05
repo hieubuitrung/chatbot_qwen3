@@ -25,6 +25,7 @@ PDF_DIR = ""
 
 _HANH_CHINH_INDEX = {}
 _THUA_INDEX = {}
+_THUA_THEO_TO_INDEX = {}
 _FLAGS = {}
 
 # -----------------------
@@ -79,6 +80,7 @@ def build_index_once(
     flag_name: str,
     key_builder: Callable[[dict], Any],
     value_builder: Callable[[dict], Any],
+    multi_value: bool = False # Thêm tham số để kiểm soát việc ghi đè hay cộng dồn
 ):
     """
     Build index từ file JSON chỉ 1 lần.
@@ -96,7 +98,15 @@ def build_index_once(
         props = ft.get("properties", {})
         key = key_builder(props)
         if key is not None:
-            index[key] = value_builder(props)
+            val = value_builder(props)
+            if multi_value:
+                # Nếu cho phép nhiều giá trị (ví dụ: nhiều thửa trong 1 tờ)
+                if key not in index:
+                    index[key] = []
+                index[key].append(val)
+            else:
+                # Nếu chỉ cần 1 giá trị duy nhất (truy xuất nhanh 1 đối tượng)
+                index[key] = val
 
     loaded_flag[flag_name] = True
 
@@ -116,186 +126,147 @@ def clean_val(val, default="Đang cập nhật"):
     return str_val
 
 # function tra cứu theo mã
-def tra_cuu_thua(json: dict) -> Dict[str, Any]:
+def tra_cuu_thua(json_input: dict) -> Dict[str, Any]:
     """
     Tra cứu thửa đất theo:
     - Số thửa + số tờ bản đồ (ma_thua, to_ban_do)
+    - Chỉ số tờ bản đồ (to_ban_do) -> Trả về danh sách thửa
     - Hoặc theo tọa độ (lat, lon)
     """
-    # Xác định loại truy vấn
-    if "ma_thua" in json or "to_ban_do" in json:
-        # --- Tra cứu theo mã thửa ---
-        ma_thua = json.get("ma_thua")
-        to_ban_do = json.get("to_ban_do")
+    # 1. Khởi tạo mô tả trường dữ liệu chung
+    field_descriptions = {
+        "soto": "Số tờ bản đồ",
+        "sothua": "Số thửa đất/mã thửa",
+        "dientich": "Diện tích thửa đất (m²)",
+        "maloaidat": "Mã loại đất (Ví dụ: ODT, DGT, SKC...)",
+        "duongthua": "Tên đường nơi có thửa đất",
+        "chusudung": "Tên chủ sử dụng đất hợp pháp",
+        "diachithua": "Địa chỉ thửa đất",
+        "diachi_csd": "Địa chỉ chủ sử dụng đất",
+        "ghichu": "Ghi chú",
+        "tenxa": "Tên xã/phường",
+        "tenhuyen": "Tên huyện/thành phố",
+        "tentinh": "Tên tỉnh",
+        "lat": "Vĩ độ",
+        "lon": "Kinh độ"
+    }
 
-        missing_fields = []
-        if not ma_thua:
-            missing_fields.append("ma_thua")
+    try:
+        # 2. Luôn đảm bảo index Hành chính được load (dùng chung cho mọi case)
+        build_index_once(
+            file_path=DIR_HANH_CHINH,
+            index=_HANH_CHINH_INDEX,
+            loaded_flag=_FLAGS,
+            flag_name="hanh_chinh",
+            key_builder=lambda p: str(p.get("maxa", "")).strip() or None,
+            value_builder=lambda p: {
+                "tenxa": p.get("tenxa"),
+                "tenhuyen": p.get("tenhuyen"),
+                "tentinh": p.get("tentinh"),
+            },
+        )
+    except Exception as e:
+        return _make_error(f"Lỗi tải dữ liệu hành chính: {str(e)}")
+
+    # --- CASE 1: TRA CỨU THEO TỜ/THỬA ---
+    if "to_ban_do" in json_input:
+        to_ban_do = str(json_input.get("to_ban_do", "")).strip()
+        ma_thua = str(json_input.get("ma_thua", "")).strip() if json_input.get("ma_thua") else None
+
         if not to_ban_do:
-            missing_fields.append("to_ban_do")
-
-        if missing_fields:
-            lookup_result = build_lookup_result_from_functions(
-                function_name="tra_cuu_thua_theo_ma",
-                missing_fields=missing_fields
-            )
-            return _make_incomplete(lookup_result)
-
-        ma_thua_norm = str(ma_thua).strip()
-        to_ban_do_norm = str(to_ban_do).strip()
+            return _make_incomplete(build_lookup_result_from_functions("tra_cuu", ["to_ban_do"]))
 
         try:
-            build_index_once(
-                file_path=DIR_HANH_CHINH,
-                index=_HANH_CHINH_INDEX,
-                loaded_flag=_FLAGS,
-                flag_name="hanh_chinh",
-                key_builder=lambda p: str(p.get("maxa", "")).strip() or None,
-                value_builder=lambda p: {
-                    "tenxa": p.get("tenxa"),
-                    "tenhuyen": p.get("tenhuyen"),
-                    "tentinh": p.get("tentinh"),
-                },
-            )
+            # CASE 1.1: CÓ CẢ TỜ VÀ THỬA (Chi tiết 1 thửa)
+            if ma_thua:
+                build_index_once(
+                    file_path=DIR_THUA_DAT,
+                    index=_THUA_INDEX,
+                    loaded_flag=_FLAGS,
+                    flag_name="thua",
+                    key_builder=lambda p: (str(p.get("soto", "")).strip(), str(p.get("sothua", "")).strip()),
+                    value_builder=lambda p: p,
+                )
+                props = _THUA_INDEX.get((to_ban_do, ma_thua))
+                
+                if not props:
+                    return {"status": "not_found", "message": f"Không tìm thấy thửa {ma_thua} trong tờ {to_ban_do}"}
 
-            build_index_once(
-                file_path=DIR_THUA_DAT,
-                index=_THUA_INDEX,
-                loaded_flag=_FLAGS,
-                flag_name="thua",
-                key_builder=lambda p: (str(p.get("soto", "")).strip(),
-                                       str(p.get("sothua", "")).strip()),
-                value_builder=lambda p: p,
-            )
+                hc = _HANH_CHINH_INDEX.get(str(props.get("maxa", "")).strip(), {})
+                data_out = {
+                    "soto": to_ban_do, "sothua": ma_thua,
+                    "dientich": clean_val(props.get("dientich")),
+                    "maloaidat": clean_val(props.get("maloaidat")),
+                    "diachithua": clean_val(props.get("diachithua")),
+                    "duongthua": clean_val(props.get("duongthua")),
+                    "chusudung": clean_val(props.get("chusudung1"), default="Chưa xác định"),
+                    "diachi_csd": clean_val(props.get("diachi_csd")),
+                    "ghichu": clean_val(props.get("ghichu"), default="Không có ghi chú"),
+                    **hc
+                }
+                return _make_success(data_out, field_descriptions)
+
+            # CASE 1.2: CHỈ CÓ TỜ (Danh sách các thửa)
+            else:
+                build_index_once(
+                    file_path=DIR_THUA_DAT,
+                    index=_THUA_THEO_TO_INDEX,
+                    loaded_flag=_FLAGS,
+                    flag_name="thua_theo_to",
+                    key_builder=lambda p: str(p.get("soto", "")).strip() or None,
+                    value_builder=lambda p: {"sothua": p.get("sothua"), "maloaidat": p.get("maloaidat"), "dientich": p.get("dientich")},
+                    multi_value=True # Sử dụng tính năng multi-value đã sửa
+                )
+                list_thua = _THUA_THEO_TO_INDEX.get(to_ban_do)
+                if not list_thua:
+                    return {"status": "not_found", "message": f"Không tìm thấy dữ liệu cho tờ bản đồ số {to_ban_do}"}
+                
+                return _make_success(
+                    {"to_ban_do": to_ban_do, "danh_sach_thua": list_thua},
+                    {"danh_sach_thua": f"Danh sách các thửa đất thuộc tờ bản đồ {to_ban_do}"}
+                )
+
         except Exception as e:
-            return _make_error(f"Lỗi tải dữ liệu: {str(e)}")
+            return _make_error(f"Lỗi xử lý file thửa đất: {str(e)}")
 
-        props = _THUA_INDEX.get((to_ban_do_norm, ma_thua_norm))
-        if not props:
-            return {
-                "status": "not_found",
-                "message": f"Không tìm thấy thửa đất với số tờ = '{to_ban_do_norm}', số thửa = '{ma_thua_norm}'"
-            }
+    # --- CASE 2: TRA CỨU THEO TỌA ĐỘ ---
+    elif "lat" in json_input or "lon" in json_input:
+        lat = json_input.get("lat")
+        lon = json_input.get("lon")
 
-        hc = _HANH_CHINH_INDEX.get(str(props.get("maxa", "")).strip(), {})
-
-        data_out = {
-            "soto": to_ban_do_norm,
-            "sothua": ma_thua_norm,
-            "dientich": clean_val(props.get("dientich")),
-            "maloaidat": clean_val(props.get("maloaidat")),
-            "diachithua": clean_val(props.get("diachithua")),
-            "duongthua": clean_val(props.get("duongthua")),
-            "chusudung": clean_val(props.get("chusudung1"), default="Chưa xác định"),
-            "diachi_csd": clean_val(props.get("diachi_csd")),
-            "ghichu": clean_val(props.get("ghichu"), default="Không có ghi chú"),
-            **hc
-        }
-
-        field_descriptions = {
-            "soto": "Số tờ bản đồ",
-            "sothua": "Số thửa đất/mã thửa",
-            "dientich": "Diện tích thửa đất (m²)",
-            "maloaidat": "Mã loại đất (ODT - ở đô thị, DGT - đất giao thông, SKC - đất cơ sở sản xuất phi nông nghiệp)",
-            "duongthua": "Tên đường nơi có thửa đất",
-            "chusudung": "Tên chủ sử dụng đất hợp pháp",
-            "diachithua": "Địa chỉ thửa đất",
-            "diachi_csd": "Địa chỉ chủ sử dụng đất",
-            "ghichu": "Ghi chú",
-            "tenxa": "Tên xã/phường",
-            "tenhuyen": "Tên huyện/thành phố",
-            "tentinh": "Tên tỉnh"
-        }
-
-        return _make_success(data_out, field_descriptions)
-
-    elif "lat" in json or "lon" in json:
-        # --- Tra cứu theo tọa độ ---
-        lat = json.get("lat")
-        lon = json.get("lon")
-
-        missing_fields = []
-        if not lat:
-            missing_fields.append("lat")
-        if not lon:
-            missing_fields.append("lon")
-
-        if missing_fields:
-            lookup_result = build_lookup_result_from_functions(
-                function_name="tra_cuu_thua_theo_toa_do",
-                missing_fields=missing_fields
-            )
-            return _make_incomplete(lookup_result)
+        if not lat or not lon:
+            return _make_incomplete(build_lookup_result_from_functions("tra_cuu_toa_do", ["lat", "lon"]))
 
         try:
+            # Lưu ý: Nên đưa việc load gdf ra ngoài hàm để tối ưu hiệu năng (Global)
             gdf = gpd.read_file(DIR_THUA_DAT, encoding="utf-8")
+            point = Point(float(lon), float(lat))
+            match = gdf[gdf.contains(point)]
+
+            if match.empty:
+                return {"status": "not_found", "message": f"Tọa độ ({lat}, {lon}) không nằm trong thửa đất nào."}
+
+            data = match.iloc[0].to_dict()
+            hc = _HANH_CHINH_INDEX.get(str(data.get("maxa", "")).strip(), {})
+
+            data_out = {
+                "lat": lat, "lon": lon,
+                "soto": data.get("soto"), "sothua": data.get("sothua"),
+                "dientich": clean_val(data.get("dientich")),
+                "maloaidat": clean_val(data.get("maloaidat")),
+                "diachithua": clean_val(data.get("diachithua")),
+                "duongthua": clean_val(data.get("duongthua")),
+                "chusudung": clean_val(data.get("chusudung1"), default="Chưa xác định"),
+                "diachi_csd": clean_val(data.get("diachi_csd")),
+                "ghichu": clean_val(data.get("ghichu"), default="Không có ghi chú"),
+                **hc
+            }
+            return _make_success(data_out, field_descriptions)
         except Exception as e:
-            return _make_error(f"Không thể đọc file GeoJSON: {str(e)}")
+            return _make_error(f"Lỗi xử lý tọa độ: {str(e)}")
 
-        point = Point(float(lon), float(lat))
-        match = gdf[gdf.contains(point)]
-
-        if match.empty:
-            return {"status": "not_found",
-                    "message": f"Không tìm thấy quy hoạch với tọa độ lat = '{lat}', lon = '{lon}'"}
-
-        data = match.iloc[0].to_dict()
-
-        try:
-            build_index_once(
-                file_path=DIR_HANH_CHINH,
-                index=_HANH_CHINH_INDEX,
-                loaded_flag=_FLAGS,
-                flag_name="hanh_chinh",
-                key_builder=lambda p: str(p.get("maxa", "")).strip() or None,
-                value_builder=lambda p: {
-                    "tenxa": p.get("tenxa"),
-                    "tenhuyen": p.get("tenhuyen"),
-                    "tentinh": p.get("tentinh"),
-                },
-            )
-        except Exception as e:
-            return _make_error(f"Lỗi tải dữ liệu: {str(e)}")
-
-        hc = _HANH_CHINH_INDEX.get(str(data.get("maxa", "")).strip(), {})
-
-        data_out = {
-            "lat": lat,
-            "lon": lon,
-            "soto": data.get("soto"),
-            "sothua": data.get("sothua"),
-            "dientich": data.get("dientich"),
-            "maloaidat": data.get("maloaidat"),
-            "diachithua": data.get("diachithua"),
-            "duongthua": data.get("duongthua"),
-            "chusudung": data.get("chusudung1"),
-            "diachi_csd": data.get("diachi_csd"),
-            "ghichu": data.get("ghichu"),
-            **hc
-        }
-
-        field_descriptions = {
-            "lat": "Vĩ độ",
-            "lon": "Kinh độ",
-            "soto": "Số tờ bản đồ",
-            "sothua": "Số thửa đất/mã thửa đất",
-            "dientich": "Diện tích thửa đất (m²)",
-            "maloaidat": "Mã loại đất (ODT - ở đô thị, DGT - đất giao thông, SKC - đất cơ sở sản xuất phi nông nghiệp)",
-            "duongthua": "Tên đường nơi có thửa đất",
-            "chusudung": "Tên chủ sử dụng đất hợp pháp",
-            "diachithua": "Địa chỉ thửa đất",
-            "diachi_csd": "Địa chỉ chủ sử dụng đất",
-            "ghichu": "Ghi chú",
-            "tenxa": "Tên xã/phường",
-            "tenhuyen": "Tên huyện/thành phố",
-            "tentinh": "Tên tỉnh"
-        }
-
-        return _make_success(data_out, field_descriptions)
-
-    else:
-        # Không có dữ liệu cần thiết
-        return _make_incomplete("Thiếu tham số tra cứu: yêu cầu 'ma_thua + to_ban_do' hoặc 'lat + lon'")
+    # --- CASE 3: THIẾU THÔNG TIN ---
+    return _make_incomplete("Vui lòng cung cấp số tờ (to_ban_do) hoặc tọa độ (lat, lon) để tra cứu.")
 
 
 
