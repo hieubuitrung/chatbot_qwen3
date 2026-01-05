@@ -95,7 +95,7 @@ class FunctionAgent:
         return standalone_query.strip()
 
     
-    def select_function(self, user_query: str) -> str:
+    def select_function(self, history, user_query: str) -> str:
         """
         Chọn function dựa trên câu hỏi hiện tại của user.
         Không dùng history để tối giản và tăng tốc.
@@ -105,12 +105,15 @@ class FunctionAgent:
             f"{fn['name']}: {fn['description']}" for fn in functions
         )
 
+        recent_history = history[-6:]  # Giữ nguyên dict {"role": ..., "content": ...}
+
         SYSTEM_PROMPT_STEP1 = SYSTEM_PROMPT["function_selection"].format(
             function_list=function_list
         )
 
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT_STEP1},
+            *recent_history,
             {"role": "user", "content": user_query}
         ]
 
@@ -125,7 +128,7 @@ class FunctionAgent:
         return fn_name
 
 
-    def extract_params(self, fn_name, user_query):
+    def extract_params(self, fn_name, history, user_query):
         # Nếu LLM nói "None" → coi như câu hỏi đơn thuần
         if fn_name in ["none", "null", "", "no_function"]:
             return {}
@@ -147,9 +150,12 @@ class FunctionAgent:
             param_list=param_list or "không yêu cầu tham số"
         )
 
+        recent_history = history[-6:]  # Giữ nguyên dict {"role": ..., "content": ...}
+
         messages_step2 = [
             {"role": "system", "content": step2_prompt},
-            {"role": "user", "content": f"Trích xuất JSON cho câu hỏi: {user_query}"}
+            *recent_history,
+            {"role": "user", "content": user_query}
         ]
 
         print("Message step 2: ", messages_step2)
@@ -194,9 +200,10 @@ class FunctionAgent:
         state_dict = state_manager.get()
         state_dict["stop"] = False
         
+        recent_history = state_manager.conversation["history"][-7:-1]
         messages = [{"role": "system", "content": system_prompt},
+                    *recent_history,
                     {"role": "user", "content": user_query}]
-        # messages += state_manager.conversation["history"][-5:]
 
         print("Messages step 3: ", messages)
         tokenized = self.tokenizer.apply_chat_template(
