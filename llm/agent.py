@@ -136,7 +136,7 @@ class FunctionAgent:
 
         raw_fn_name = self.llm_generate(
             messages,
-            max_tokens=16,
+            max_tokens=32,
         )
 
         fn_name = raw_fn_name.strip().lower()
