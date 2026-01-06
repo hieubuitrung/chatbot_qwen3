@@ -214,17 +214,56 @@ def tra_cuu_thua(json_input: dict) -> Dict[str, Any]:
                     loaded_flag=_FLAGS,
                     flag_name="thua_theo_to",
                     key_builder=lambda p: str(p.get("soto", "")).strip() or None,
-                    value_builder=lambda p: {"sothua": p.get("sothua"), "maloaidat": p.get("maloaidat"), "dientich": p.get("dientich")},
+                    value_builder=lambda p: p,
                     multi_value=True # Sử dụng tính năng multi-value đã sửa
                 )
                 list_thua = _THUA_THEO_TO_INDEX.get(to_ban_do)
                 if not list_thua:
                     return {"status": "not_found", "message": f"Không tìm thấy dữ liệu cho tờ bản đồ số {to_ban_do}"}
                 
-                return _make_success(
-                    {"to_ban_do": to_ban_do, "danh_sach_thua": list_thua},
-                    {"danh_sach_thua": f"Danh sách các thửa đất thuộc tờ bản đồ {to_ban_do}"}
-                )
+                field_descriptions.update({
+                    "soluongthua": "Tổng số lượng thửa đất có trong tờ bản đồ này",
+                    "tongdientich": "Tổng diện tích tất cả thửa đất trong tờ bản đồ này (m²)",
+                    "loaidat_dientich": "Tổng diện tích phân theo loại đất trong tờ bản đồ này",
+                    "cactuyenduong": "Danh sách các tuyến đường có thửa đất trong tờ bản đồ này"
+                })
+
+                # Khởi tạo dictionary để cộng dồn diện tích theo loại đất
+                hc = _HANH_CHINH_INDEX.get(str(list_thua[0].get("maxa", "")).strip(), {})
+                area_by_type = {}
+                total_area = 0
+
+                for item in list_thua:
+                    maloai = item.get("maloaidat") or "chưa xác định"
+                    # Đảm bảo dientich là số thực để tính toán
+                    try:
+                        dt = float(item.get("dientich") or 0)
+                    except (ValueError, TypeError):
+                        dt = 0
+                    
+                    # Cộng dồn vào diện tích tổng
+                    total_area += dt
+                    
+                    # Cộng dồn vào từng loại đất cụ thể
+                    if maloai in area_by_type:
+                        area_by_type[maloai] += dt
+                    else:
+                        area_by_type[maloai] = dt
+
+
+                # Làm tròn số sau khi tính toán xong
+                area_by_type = {k: round(v, 2) for k, v in area_by_type.items()}
+
+                data = {
+                    "soluongthua": len(list_thua),
+                    "tongdientich": round(total_area, 2),
+                    "loaidat_dientich": area_by_type,  # Kết quả: {'ONT': 500.5, 'CLN': 1200.0}
+                    "cactuyenduong": list(set(item.get("duongthua") for item in list_thua if item.get("duongthua").strip())),
+                    "soto": to_ban_do,
+                    **hc
+                }
+
+                return _make_success(data, field_descriptions)
 
         except Exception as e:
             return _make_error(f"Lỗi xử lý file thửa đất: {str(e)}")
@@ -361,19 +400,31 @@ def hoi_thoai_chung(json: dict):
 # danh sách mô tả function
 functions = [
     {
+        "name": "tra_cuu_quy_hoach_theo_to",
+        "description": "Tra cứu thông tin quy hoạch chỉ theo tờ bản đồ.",
+        "parameters": {
+            "to_ban_do": {"type": "string", "description": "Tờ/tờ bản đồ (Ví dụ: 50)"}
+        },
+        "required": ["to_ban_do"],
+        "callable": tra_cuu_thua,
+        "suggestion_templates": [
+            "Tính tổng diện tích các thửa đất trong tờ bản đồ này.",
+            "Xem danh sách các loại đất và diện tích tương ứng trong tờ bản đồ này.",
+            "Tờ bản đồ thuộc xã/phường nào?"
+        ]
+    },
+    {
         "name": "tra_cuu_quy_hoach_thua_theo_ma",
         "description": "Tra cứu thông tin quy hoạch thửa đất theo mã thửa và tờ bản đồ.",
         "parameters": {
             "ma_thua": {"type": "string", "description": "Thửa/mã thửa (Ví dụ: 123)"},
             "to_ban_do": {"type": "string", "description": "Tờ/tờ bản đồ (Ví dụ: 50)"}
         },
-        "required": ["to_ban_do"],
+        "required": ["to_ban_do", "ma_thua"],
         "callable": tra_cuu_thua,
         "suggestion_templates": [
-            "Tra cứu các thửa đất liền kề với thửa {ma_thua} tờ {to_ban_do}",
-            "Xem danh sách tất cả các thửa thuộc cùng tờ bản đồ {to_ban_do}",
-            "Kiểm tra chi tiết biến động/tranh chấp của thửa {ma_thua} tờ {to_ban_do}",
-            "Tính toán tiền sử dụng đất khi chuyển đổi mục đích tại thửa {ma_thua}"
+            "Tra cứu các thửa đất liền kề với thửa đất này.",
+            "Tính toán tiền sử dụng đất khi chuyển đổi mục đích tại thửa đất này."
         ]
     },
     {
