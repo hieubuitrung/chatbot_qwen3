@@ -175,7 +175,7 @@ class Orchestrator:
         if status == "success":
             desc = result.get("field_descriptions", {})
             function_name = fn
-            data = result.get("data", {})
+            data = result.get("data", [])
 
             self.state.update_context(function_name, data)
 
@@ -189,17 +189,18 @@ class Orchestrator:
 
             # 👇 BỔ SUNG: xử lý suggestion templates với params
             SUGGESTION_TEMPLATES = fn_info.get("suggestion_templates", [])
-            suggestions = [
-                tpl.format(**final_params)
-                for tpl in SUGGESTION_TEMPLATES
-            ]
+            suggestions = SUGGESTION_TEMPLATES
+            # suggestions = [
+            #     tpl.format(**final_params)
+            #     for tpl in SUGGESTION_TEMPLATES
+            # ]
 
             suggestion_templates = "\n".join(f"- {s}" for s in suggestions)
-            max_tokens=512
+            max_tokens=1024
 
         elif status == "incomplete" or status == "not_found" or status == "summary":
             lookup_text = result.get("message", "")
-            max_tokens=256
+            max_tokens=512
         else:
             lookup_text = ""
 

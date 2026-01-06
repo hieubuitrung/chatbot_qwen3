@@ -93,7 +93,7 @@ class FunctionAgent:
             history_str += f"{role_label}: {msg['content']}\n"
 
         # Tạo prompt theo dạng Instruction rõ ràng
-        user_content = f"--- LỊCH SỬ ---\n{history_str}\n\n--- CÂU HỎI MỚI ---\n{new_user_input}"
+        user_content = f"--- LỊCH SỬ TRÒ CHUYỆN ---\n{history_str}\n\n--- CÂU HỎI MỚI NHẤT ---\n{new_user_input}"
 
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT["rewrite_query"].strip()},
@@ -177,7 +177,7 @@ class FunctionAgent:
 
         max_tokens = 128
         if (fn_name == "tom_tat_van_ban"):
-            max_tokens = 512
+            max_tokens = 1024
         raw_params = self.llm_generate(messages_step2, max_tokens)
         
         arguments = self.safe_parse_json(raw_params)
