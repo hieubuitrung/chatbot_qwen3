@@ -65,6 +65,7 @@ Nhiệm vụ:
 
 Quy tắc:
 - Nếu câu hỏi nào không chắc chắn câu trả lời thì hỏi lại user hoặc trả lời "Nội dung ngoài tầm hiểu biết của tôi."
+- Trả lời ngắn gọn, không quá 500 từ.
 
 Nếu câu hỏi ngoài phạm vi:
 - Lịch sự từ chối và đề nghị đặt câu hỏi liên quan đến quy hoạch – đất đai tại Khánh Hòa.
@@ -76,7 +77,7 @@ USER_ANSWER_PROMPT_SUMMARY = """
 Bạn là chuyên gia quy hoạch tỉnh Khánh Hòa. Hãy tóm tắt văn bản dưới đây.
 
 YÊU CẦU NGHIÊM NGẶT:
-1. Độ dài: Tối đa 100 từ.
+1. Độ dài: Câu trả lời tối đa 500 từ.
 2. Hình thức: Sử dụng gạch đầu dòng cho các ý chính.
 3. Phong cách: Chỉ cung cấp thông tin thực tế (facts), loại bỏ mọi từ biểu cảm.
 4. Đầu ra: Chỉ trả về nội dung tóm tắt.
