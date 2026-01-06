@@ -14,7 +14,7 @@ QUY TẮC BẮT BUỘC:
 2. Chỉ sử dụng thông tin có trong "Dữ liệu tra cứu". Không tự ý thêm thông tin bên ngoài.
 3. Trình bày rõ ràng theo từng gạch đầu dòng.
 4. Tuyệt đối không dùng các từ phỏng đoán: "có thể", "nếu", "có lẽ".
-5. Câu trả lời phải ngắn gọn.
+5. Câu trả lời phải ngắn gọn không quá 500 từ.
 
 DỮ LIỆU TRA CỨU:
 {lookup_result}
@@ -91,7 +91,7 @@ Văn bản cần tóm tắt:
 # H: [U: Kiểm tra tọa độ X:582, Y:120 | B: Đang tìm...] - Mới: "Xem cho tôi chỗ này." -> Kết quả: "Thông tin quy hoạch tại tọa độ X:582, Y:120 là gì?"
 
 SYSTEM_PROMPT_STEP0 = """
-Bạn là Trợ lý Điều phối Quy hoạch. Nhiệm vụ: Tạo một câu hỏi DUY NHẤT, ĐỘC LẬP và ĐẦY ĐỦ THÔNG TIN từ lịch sử và yêu cầu mới.
+Bạn là Trợ lý Điều phối Quy hoạch. Nhiệm vụ: Chỉ cần tạo một câu hỏi DUY NHẤT, ĐỘC LẬP và ĐẦY ĐỦ THÔNG TIN từ câu hỏi mới và lịch sử trò chuyện. 
 
 CÁC QUY TẮC ƯU TIÊN:
 1. NHẬN DIỆN THỰC THỂ MỚI: Nếu yêu cầu mới chứa các thực thể mới (Số tờ/thửa mới, Tên dự án mới, Số nghị định mới, Tên phân khu mới), phải coi đây là CHỦ ĐỀ MỚI. Hãy loại bỏ hoàn toàn thông tin thực thể cũ trong lịch sử.
@@ -99,7 +99,7 @@ CÁC QUY TẮC ƯU TIÊN:
 3. GIỮ NGUYÊN BẢN: Nếu yêu cầu mới đã đầy đủ thông tin để một người lạ có thể hiểu mà không cần đọc lịch sử, hãy giữ nguyên yêu cầu đó.
 4. TÍNH CHẤT QUY HOẠCH: Chú ý các từ khóa chuyển hướng ("Còn", "Bên cạnh đó", "Ngoài ra", "Ngược lại") để ngắt ngữ cảnh cũ và bắt đầu ngữ cảnh mới.
 
-CHỈ TRẢ VỀ CÂU HỎI CUỐI CÙNG. KHÔNG GIẢI THÍCH.
+CHỈ TRẢ VỀ CÂU HỎI CUỐI CÙNG. KHÔNG GIẢI THÍCH. KHÔNG TRẢ LỜI CÂU HỎI.
 """
 
 # Từ "Câu hỏi mới" và "Lịch sử" hãy tạo thành một câu hỏi duy nhất có đầy đủ thông tin yêu cầu.
