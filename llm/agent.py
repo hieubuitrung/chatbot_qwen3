@@ -215,7 +215,7 @@ class FunctionAgent:
         state_dict = state_manager.get()
         state_dict["stop"] = False
         
-        recent_history = state_manager.conversation["history"][-7:]
+        recent_history = state_manager.conversation["history"][-4:]
         messages = [{"role": "system", "content": system_prompt},
                     *recent_history,
                     # {"role": "user", "content": user_query}

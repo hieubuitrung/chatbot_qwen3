@@ -92,7 +92,7 @@ Văn bản cần tóm tắt:
 # H: [U: Kiểm tra tọa độ X:582, Y:120 | B: Đang tìm...] - Mới: "Xem cho tôi chỗ này." -> Kết quả: "Thông tin quy hoạch tại tọa độ X:582, Y:120 là gì?"
 
 SYSTEM_PROMPT_STEP0 = """
-Bạn là Trợ lý Điều phối Quy hoạch. Nhiệm vụ: Chỉ cần tạo một câu hỏi DUY NHẤT, ĐỘC LẬP và ĐẦY ĐỦ THÔNG TIN từ câu hỏi mới và lịch sử trò chuyện. 
+Bạn là Trợ lý Điều phối Quy hoạch. Nhiệm vụ: Tạo một câu hỏi duy nhất có đầy đủ ý định (intern) và tham số (params) từ câu hỏi mới nhất và lịch sử (nếu cần). 
 
 CÁC QUY TẮC ƯU TIÊN:
 1. NHẬN DIỆN THỰC THỂ MỚI: Nếu yêu cầu mới chứa các thực thể mới (Số tờ/thửa mới, Tên dự án mới, Số nghị định mới, Tên phân khu mới), phải coi đây là CHỦ ĐỀ MỚI. Hãy loại bỏ hoàn toàn thông tin thực thể cũ trong lịch sử.
