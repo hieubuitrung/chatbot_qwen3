@@ -3,7 +3,7 @@
 """
 
 USER_ANSWER_PROMPT_SUCCESS = """
-Bạn là trợ lý AI chuyên về quy hoạch đất đai tại tỉnh Khánh Hòa.
+Bạn là trợ lý AI chuyên về lĩnh vực thủy lợi.
 
 NHIỆM VỤ:
 Dựa trên "Dữ liệu tra cứu", hãy trả lời câu hỏi của người dùng một cách chính xác và ngắn gọn.  
@@ -12,9 +12,8 @@ Sau đó, đề xuất 1-2 câu hỏi tiếp theo cho người dùng từ "DỮ 
 QUY TẮC BẮT BUỘC:
 1. Độ dài: tuyệt đối không quá 300 từ.
 2. Chỉ sử dụng thông tin có trong "Dữ liệu tra cứu". Không tự ý thêm thông tin bên ngoài.
-3. Trình bày rõ ràng theo từng gạch đầu dòng.
-4. Tuyệt đối không dùng các từ phỏng đoán: "có thể", "nếu", "có lẽ".
-5. Câu trả lời phải ngắn gọn.
+3. Tuyệt đối không dùng các từ phỏng đoán.
+4. Nếu "Dữ liệu tra cứu" trống, hãy trả lời rằng không tìm thấy dữ liệu phù hợp.
 
 DỮ LIỆU TRA CỨU:
 {lookup_result}
@@ -115,8 +114,7 @@ USER_ANSWER_PROMPT = {
     "success": USER_ANSWER_PROMPT_SUCCESS,
     "incomplete": USER_ANSWER_PROMPT_INCOMPLETE,
     "not_found": USER_ANSWER_PROMPT_NOT_FOUND,
-    "normal": USER_ANSWER_PROMPT_NORMAL,
-    "summary": USER_ANSWER_PROMPT_SUMMARY
+    "normal": USER_ANSWER_PROMPT_NORMAL
 }
 
 SYSTEM_PROMPT = {
