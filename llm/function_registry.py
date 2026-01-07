@@ -447,7 +447,8 @@ def tra_cuu_cong_trinh(params_json: dict):
     
     # 2. Nếu không có điều kiện, có thể giới hạn kết quả
     if not values:
-        query += " LIMIT 50"
+        query += " LIMIT 1"
+        # return _make_incomplete("Vui lòng cung cấp thông tin về công trình để có thể tra cứu.")
         
     # 3. Gọi hàm thực thi dùng chung
     data = execute_select_query(query, values)
@@ -549,12 +550,12 @@ functions = [
     #     "required": ["van_ban"],
     #     "callable": tom_tat_van_ban
     # },
-    # {
-    #     "name": "hoi_dap_quy_hoach",
-    #     "description": "Các câu hỏi chung về quy hoạch sử dụng đất, pháp luật đất đai, quy trình hành chính, khái niệm chuyên ngành.",
-    #     "parameters": {},
-    #     "callable": hoi_dap_quy_hoach
-    # },
+    {
+        "name": "hoi_dap_chung",
+        "description": "Các câu hỏi chung về thủy lợi, pháp luật, quy trình, khái niệm chuyên ngành.",
+        "parameters": {},
+        "callable": hoi_dap_quy_hoach
+    },
     # {
     #     "name": "hoi_thoai_chung",
     #     "description": "Xử lý các câu chào hỏi, cảm ơn, yêu cầu tiếp tục, hoặc yêu cầu lặp lại câu trả lời trước đó.",
