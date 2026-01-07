@@ -22,8 +22,8 @@ class FunctionAgent:
         """
         Khởi tạo agent: load model + chuẩn bị tokenizer.
         """
-        # MODEL_PATH = Path(__file__).parent.parent / "models" / "Qwen3-4B-Instruct-2507"
-        MODEL_PATH = "Qwen/Qwen2.5-7B-Instruct"
+        MODEL_PATH = Path(__file__).parent.parent / "models" / "Qwen3-4B-Instruct-2507"
+        # MODEL_PATH = "Qwen/Qwen2.5-7B-Instruct"
 
         self.model, self.tokenizer = get_model_and_tokenizer(str(MODEL_PATH))
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

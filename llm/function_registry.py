@@ -2,7 +2,10 @@
 import os
 import sys
 import json
-from typing import Dict, Any, Callable
+from typing import Dict, Any, Callable, List
+from types import SimpleNamespace
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 # Thiết lập đường dẫn đến PROJ của riêng môi trường Conda (do bị xung đột với các biến môi trường khác của máy)
 conda_prefix = os.environ.get('CONDA_PREFIX') or r'C:\Users\HIEU\miniconda3\envs\chatbot_conda'
@@ -27,6 +30,15 @@ _HANH_CHINH_INDEX = {}
 _THUA_INDEX = {}
 _THUA_THEO_TO_INDEX = {}
 _FLAGS = {}
+
+# Thông tin kết nối DB
+DB_CONFIG = {
+    "dbname": "dubaonguonnuoc",
+    "user": "postgres",
+    "password": "penta@321",
+    "host": "vbeta.net",
+    "port": "5433"
+}
 
 # -----------------------
 # Helpers / Schema result
@@ -397,75 +409,156 @@ def hoi_dap_quy_hoach(json: dict):
 def hoi_thoai_chung(json: dict):
     return {"status": "normal"}
 
+def execute_select_query(query: str, values: tuple = ()):
+    """Hàm dùng chung để thực thi các câu lệnh SELECT và trả về List[Dict]"""
+    conn = None
+    try:
+        conn = psycopg2.connect(**DB_CONFIG)
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(query, values)
+            return cur.fetchall()
+    except Exception as e:
+        print(f"Database Error: {e}")
+        return None
+    finally:
+        if conn:
+            conn.close()
+
+def build_dynamic_where(base_query: str, params: dict):
+    """Tự động tạo câu SQL và Tuple values từ Dictionary"""
+    conditions = []
+    values = []
+    
+    for field, value in params.items():
+        if value is not None and value != "":
+            conditions.append(f"unaccent(LOWER({field})) ILIKE unaccent(LOWER(%s))")
+            search_value = value.replace(" ", "%")
+            values.append(f"%{search_value}%")
+            
+    query = base_query
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+        
+    return query, tuple(values)
+
+def tra_cuu_cong_trinh(params_json: dict):
+    # 1. Gọi hàm xây dựng query
+    query, values = build_dynamic_where("SELECT * FROM c.congtrinh", params_json)
+    
+    # 2. Nếu không có điều kiện, có thể giới hạn kết quả
+    if not values:
+        query += " LIMIT 50"
+        
+    # 3. Gọi hàm thực thi dùng chung
+    data = execute_select_query(query, values)
+    
+    clean_objects = [dict(row) for row in data] if data else []
+
+    # 2. Loại bỏ các trường dữ liệu rác ngay từ đầu (như 'geom') để nhẹ máy
+    for obj in clean_objects:
+        obj.pop('geom', None)
+
+    # 3. Đóng gói vào biến result
+    result = {
+        "status": "success" if data is not None else "error",
+        "data": clean_objects  # Trả về danh sách các dictionary sạch
+    }
+    print("tra_cuu_cong_trinh result:", result)
+
+    return _make_success(result)
+
+
+
 # danh sách mô tả function
 functions = [
     {
-        "name": "tra_cuu_quy_hoach_theo_to",
-        "description": "Tra cứu thông tin quy hoạch chỉ theo tờ bản đồ.",
+        "name": "tra_cuu_cong_trinh",
+        "description": "Tra cứu thông tin danh mục, thuộc tính và đặc điểm kỹ thuật của các công trình thủy lợi. Dùng khi người dùng hỏi về: tên, vị trí (xã/huyện/tỉnh), loại hình (đập, cống, trạm bơm), năm xây dựng, đơn vị quản lý hoặc quy mô công trình.",
         "parameters": {
-            "to_ban_do": {"type": "string", "description": "Tờ/tờ bản đồ (Ví dụ: 50)"}
+            "ten": {"type": "string", "description": "Tên gọi hoặc tên chính thức của công trình."},
+            "ma": {"type": "string", "description": "Mã định danh hoặc tên gọi riêng của công trình (ví dụ: 'H45.TL0008.HC001')."},
+            "loaicongtrinh": {"type": "string", "description": "Phân loại công trình. Ví dụ: 'Hồ chứa', 'Hệ thống hỗn hợp', 'Trạm bơm', 'Cống', 'Hồ chứa TĐ', 'HT tiêu', 'Đập dâng'."},
+            "namxd": {"type": "number", "description": "Năm công trình được xây dựng hoặc đưa vào sử dụng (ví dụ: 1998)."},
+            "vung": {"type": "string", "description": "Vùng thủy lợi hoặc vùng kinh tế (ví dụ: 'Trung Quốc', 'Đồng bằng SCL', 'Bắc Trung Bộ')."},
+            "matinh": {"type": "string", "description": "Tên hoặc mã tỉnh/thành phố nơi công trình tọa lạc."},
+            "mahuyen": {"type": "string", "description": "Tên hoặc mã quận/huyện nơi công trình tọa lạc."},
+            "maxa": {"type": "string", "description": "Tên hoặc mã phường/xã nơi công trình tọa lạc."},
+            "dvql": {"type": "string", "description": "Tên đơn vị hoặc tổ chức chịu trách nhiệm quản lý vận hành công trình."},
+            "luuvuc": {"type": "string", "description": "Hệ thống lưu vực sông mà công trình thuộc về (ví dụ: 'Sông Đà', 'Sông Cả')."},
+            "x": {"type": "number", "description": "Tọa độ lon (kinh độ) của công trình"},
+            "y": {"type": "number", "description": "Tọa độ lat (vĩ độ) của công trình"},
+            "phanloailonnho": {"type": "string", "description": "Quy mô phân loại của công trình. Giá trị có thể là: 'Lớn', 'Vừa', 'Nhỏ'."}
         },
-        "required": ["to_ban_do"],
-        "callable": tra_cuu_thua,
-        "suggestion_templates": [
-            "Tính tổng diện tích các thửa đất trong tờ bản đồ này.",
-            "Xem danh sách các loại đất và diện tích tương ứng trong tờ bản đồ này.",
-            "Tờ bản đồ thuộc xã/phường nào?"
-        ]
+        "required": [],
+        "callable": tra_cuu_cong_trinh,
     },
-    {
-        "name": "tra_cuu_quy_hoach_thua_theo_ma",
-        "description": "Tra cứu thông tin quy hoạch thửa đất theo mã thửa và tờ bản đồ.",
-        "parameters": {
-            "ma_thua": {"type": "string", "description": "Thửa/mã thửa (Ví dụ: 123)"},
-            "to_ban_do": {"type": "string", "description": "Tờ/tờ bản đồ (Ví dụ: 50)"}
-        },
-        "required": ["to_ban_do", "ma_thua"],
-        "callable": tra_cuu_thua,
-        "suggestion_templates": [
-            "Tra cứu các thửa đất liền kề với thửa đất này.",
-            "Tính toán tiền sử dụng đất khi chuyển đổi mục đích tại thửa đất này."
-        ]
-    },
-    {
-        "name": "tra_cuu_quy_hoach_thua_theo_toa_do",
-        "description": "Tra cứu thông tin quy hoạch thửa đất bằng tọa độ GPS (lat, lon).",
-        "parameters": {
-            "lat": {"type": "number", "description": "Vĩ độ (Ví dụ: 10.8234)"},
-            "lon": {"type": "number", "description": "Kinh độ (Ví dụ: 106.6297)"}
-        },
-        "required": ["lat", "lon"],
-        "callable": tra_cuu_thua
-    },
-    {
-        "name": "tra_cuu_quy_hoach_san_bay_nha_trang_theo_toa_do",
-        "description": "Tra cứu quy hoạch phân khu sân bay nha trang theo tọa độ GPS (lat, lon).",
-        "parameters": {
-            "lat": {"type": "number", "description": "Vĩ độ (Ví dụ: 10.8234)"},
-            "lon": {"type": "number", "description": "Kinh độ (Ví dụ: 106.6297)"}
-        },
-        "required": ["lat", "lon"],
-        "callable": tra_cuu_quy_hoach
-    },
-    {
-        "name": "tom_tat_van_ban",
-        "description": "Tóm tắt một văn bản được cung cấp trực tiếp trong câu hỏi.",
-        "parameters": {
-            "van_ban": {"type": "string","description": "Văn bản cần tóm tắt."}
-        },
-        "required": ["van_ban"],
-        "callable": tom_tat_van_ban
-    },
-    {
-        "name": "hoi_dap_quy_hoach",
-        "description": "Các câu hỏi chung về quy hoạch sử dụng đất, pháp luật đất đai, quy trình hành chính, khái niệm chuyên ngành.",
-        "parameters": {},
-        "callable": hoi_dap_quy_hoach
-    },
-    {
-        "name": "hoi_thoai_chung",
-        "description": "Xử lý các câu chào hỏi, cảm ơn, yêu cầu tiếp tục, hoặc yêu cầu lặp lại câu trả lời trước đó.",
-        "parameters": {},
-        "callable": hoi_thoai_chung
-    }
+    # {
+    #     "name": "tra_cuu_quy_hoach_theo_to",
+    #     "description": "Tra cứu thông tin quy hoạch chỉ theo tờ bản đồ.",
+    #     "parameters": {
+    #         "to_ban_do": {"type": "string", "description": "Tờ/tờ bản đồ (Ví dụ: 50)"}
+    #     },
+    #     "required": ["to_ban_do"],
+    #     "callable": tra_cuu_thua,
+    #     "suggestion_templates": [
+    #         "Tính tổng diện tích các thửa đất trong tờ bản đồ này.",
+    #         "Xem danh sách các loại đất và diện tích tương ứng trong tờ bản đồ này.",
+    #         "Tờ bản đồ thuộc xã/phường nào?"
+    #     ]
+    # },
+    # {
+    #     "name": "tra_cuu_quy_hoach_thua_theo_ma",
+    #     "description": "Tra cứu thông tin quy hoạch thửa đất theo mã thửa và tờ bản đồ.",
+    #     "parameters": {
+    #         "ma_thua": {"type": "string", "description": "Thửa/mã thửa (Ví dụ: 123)"},
+    #         "to_ban_do": {"type": "string", "description": "Tờ/tờ bản đồ (Ví dụ: 50)"}
+    #     },
+    #     "required": ["to_ban_do", "ma_thua"],
+    #     "callable": tra_cuu_thua,
+    #     "suggestion_templates": [
+    #         "Tra cứu các thửa đất liền kề với thửa đất này.",
+    #         "Tính toán tiền sử dụng đất khi chuyển đổi mục đích tại thửa đất này."
+    #     ]
+    # },
+    # {
+    #     "name": "tra_cuu_quy_hoach_thua_theo_toa_do",
+    #     "description": "Tra cứu thông tin quy hoạch thửa đất bằng tọa độ GPS (lat, lon).",
+    #     "parameters": {
+    #         "lat": {"type": "number", "description": "Vĩ độ (Ví dụ: 10.8234)"},
+    #         "lon": {"type": "number", "description": "Kinh độ (Ví dụ: 106.6297)"}
+    #     },
+    #     "required": ["lat", "lon"],
+    #     "callable": tra_cuu_thua
+    # },
+    # {
+    #     "name": "tra_cuu_quy_hoach_san_bay_nha_trang_theo_toa_do",
+    #     "description": "Tra cứu quy hoạch phân khu sân bay nha trang theo tọa độ GPS (lat, lon).",
+    #     "parameters": {
+    #         "lat": {"type": "number", "description": "Vĩ độ (Ví dụ: 10.8234)"},
+    #         "lon": {"type": "number", "description": "Kinh độ (Ví dụ: 106.6297)"}
+    #     },
+    #     "required": ["lat", "lon"],
+    #     "callable": tra_cuu_quy_hoach
+    # },
+    # {
+    #     "name": "tom_tat_van_ban",
+    #     "description": "Tóm tắt một văn bản được cung cấp trực tiếp trong câu hỏi.",
+    #     "parameters": {
+    #         "van_ban": {"type": "string","description": "Văn bản cần tóm tắt."}
+    #     },
+    #     "required": ["van_ban"],
+    #     "callable": tom_tat_van_ban
+    # },
+    # {
+    #     "name": "hoi_dap_quy_hoach",
+    #     "description": "Các câu hỏi chung về quy hoạch sử dụng đất, pháp luật đất đai, quy trình hành chính, khái niệm chuyên ngành.",
+    #     "parameters": {},
+    #     "callable": hoi_dap_quy_hoach
+    # },
+    # {
+    #     "name": "hoi_thoai_chung",
+    #     "description": "Xử lý các câu chào hỏi, cảm ơn, yêu cầu tiếp tục, hoặc yêu cầu lặp lại câu trả lời trước đó.",
+    #     "parameters": {},
+    #     "callable": hoi_thoai_chung
+    # }
 ]
