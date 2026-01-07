@@ -8,6 +8,10 @@ Sử dụng câu lệnh: venv\Scripts\activate
 
 conda install geopandas
 
+<!-- thư viện kết nối postgre và python -->
+
+conda install -c conda-forge psycopg2
+
 # Bắt buộc: PyTorch CPU + Transformers
 
 conda install pytorch cpuonly -c pytorch
@@ -52,6 +56,7 @@ uvicorn -> server để chạy fastapi
 # chạy uvicorn - server cho pastAPI
 
 uvicorn app.api:app --reload
+!uvicorn app.api:app --host 0.0.0.0 --port 8000
 
 ##
 
@@ -86,3 +91,11 @@ conda create -n chatbot_conda python=3.11 -y
 # Kích hoạt lại
 
 conda activate chatbot_conda
+
+# Kích hoạt 2 extention trong pg
+
+-- 1. Cho phép xóa dấu tiếng Việt
+CREATE EXTENSION IF NOT EXISTS unaccent;
+
+-- 2. Cho phép tìm kiếm theo độ tương đồng (Trigram)
+CREATE EXTENSION IF NOT EXISTS pg_trgm;

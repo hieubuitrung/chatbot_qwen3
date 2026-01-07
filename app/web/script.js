@@ -1,6 +1,6 @@
 $(document).ready(function () {
   let attachments = [];
-
+  const domain = "https://fa21fe2d799a.ngrok-free.app/";
   // Mở/đóng popup
   $("#chatButton").on("click", function () {
     $("#chatPopup").toggleClass("active");
@@ -106,7 +106,7 @@ $(document).ready(function () {
   }
 
   async function loadChatHistory(conversationId, limit = 20) {
-    const apiUrl = `http://localhost:8000/chat/history?conversation_id=${conversationId}&limit=${limit}`;
+    const apiUrl = `${domain}chat/history?conversation_id=${conversationId}&limit=${limit}`;
 
     // Hiển thị trạng thái đang tải (tùy chọn)
     $("#typingIndicator").addClass("active");
@@ -210,7 +210,7 @@ $(document).ready(function () {
     $("#typingIndicator").addClass("active");
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/chat", {
+      const response = await fetch(`${domain}chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -274,7 +274,7 @@ $(document).ready(function () {
     const conversationId = getConversationId(); // bạn đang dùng rồi
 
     try {
-      await fetch("http://127.0.0.1:8000/stop", {
+      await fetch(`${domain}stop`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

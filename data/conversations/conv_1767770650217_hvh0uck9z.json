@@ -1,0 +1,84 @@
+{
+  "conversation_id": "conv_1767770650217_hvh0uck9z",
+  "history": [
+    {
+      "role": "user",
+      "content": "cho tôi biết công trình có mã H58.TL0707.TB004 được xây dựng năm bao nhiêu ?"
+    },
+    {
+      "role": "assistant",
+      "content": "- Công trình có mã H58.TL0707.TB004 được xây dựng năm 2019."
+    },
+    {
+      "role": "user",
+      "content": "công trình này có tên là gì"
+    },
+    {
+      "role": "assistant",
+      "content": "- Công trình này có tên là TB. Xuân Hòa."
+    },
+    {
+      "role": "user",
+      "content": "ngoài các thông tin trên bạn còn các thông tin gì khác về công trình này không ?"
+    },
+    {
+      "role": "assistant",
+      "content": "- Công trình TB. Xuân Hòa là trạm bơm thuộc vùng Đồng bằng SCL, nằm trong khu vực quản lý của Công ty KTCTTL.  \n- Trạm bơm phục vụ lưu vực sông Cửu Long, có mã địa lý là H58.TL0707.TB004 và tọa độ địa lý là (106.410278, 10.336712).  \n- Công trình được ghi nhận với chức năng quản lý nước, có mã huyện 822, mã tỉnh 82.  \n- Hiện tại không có thông tin về diện tích, trạng thái bảo trì, hoặc tình trạng hoạt động cụ thể."
+    }
+  ],
+  "state": {
+    "current_intent": "tra_cuu_cong_trinh",
+    "entities": {
+      "ma": "H58.TL0707.TB004",
+      "namxd": null,
+      "ten": "TB. Xuân Hòa",
+      "loaicongtrinh": "Trạm bơm",
+      "dvql": null,
+      "luuvuc": null,
+      "x": null,
+      "y": null,
+      "phanloailonnho": null
+    },
+    "missing": [],
+    "status": "done"
+  },
+  "context": {
+    "tra_cuu_cong_trinh": {
+      "status": "success",
+      "data": [
+        {
+          "ten": "TB. Xuân Hòa",
+          "loaicongtrinh": "Trạm bơm",
+          "namxd": 2019.0,
+          "vung": "Đồng bằng SCL",
+          "maxa": null,
+          "mahuyen": "822",
+          "matinh": "82",
+          "hienthi": "TramBom",
+          "dvql": "Công ty KTCTTL",
+          "flv": null,
+          "whi": null,
+          "wtb": null,
+          "mndangbt": null,
+          "mndanggiacuong": null,
+          "mnchet": null,
+          "ftk": "2000",
+          "ma": "H58.TL0707.TB004",
+          "id": 25026,
+          "z": null,
+          "x": 106.410278,
+          "y": 10.336712,
+          "luuvuc": "Sông Cửu Long",
+          "madinhdanh": "H58.TL0707.TB004",
+          "mavung": "DBSCL",
+          "phanloailonnho": null,
+          "linkweb": null,
+          "keyapi": null,
+          "mucnuoc": null
+        }
+      ]
+    }
+  },
+  "updated_at": "2026-01-07T07:49:15.323952",
+  "created_at": "2026-01-07T07:24:10.235002"
+}

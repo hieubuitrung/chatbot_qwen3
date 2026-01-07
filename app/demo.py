@@ -38,7 +38,9 @@ while True:
     print("\n")  # xuống dòng giữa mỗi lượt
 
 
-# - Số tờ bản đồ: 37
-# - Số thửa đất: 177/274
+# Tôi muốn tra cứu thông tin thửa đất số 177, tờ bản đồ 37
+# Ngoài ra, cho tôi biết luôn thửa 178 trên cùng tờ 37 có cùng mục đích sử dụng không?
+# Bên cạnh đó, thửa 274 ở tờ 37 thì sao? Có được xây nhà ở không?
+# Tạo bảng so sánh 3 thửa đất trên.
 
 #12.2282 109.1927
