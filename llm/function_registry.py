@@ -149,6 +149,8 @@ def tra_cuu_cong_trinh(table_name, hints, parameters, params_json: dict):
     # 2. Nếu không có điều kiện, trả về 1 bản ghi
     if not values:
         query += " LIMIT 1"
+    else:
+        query += " LIMIT 10"
         
     # 3. Gọi hàm thực thi dùng chung
     result = execute_select_query(query, values)

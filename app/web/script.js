@@ -1,6 +1,6 @@
 $(document).ready(function () {
   let attachments = [];
-  const domain = "http://127.0.0.1:8000/";
+  const domain = "https://ce33a14d2d8d.ngrok-free.app/";
   // Mở/đóng popup
   $("#chatButton").on("click", function () {
     $("#chatPopup").toggleClass("active");
