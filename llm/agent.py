@@ -22,9 +22,8 @@ class FunctionAgent:
         """
         Khởi tạo agent: load model + chuẩn bị tokenizer.
         """
-        MODEL_PATH = Path(__file__).parent.parent / "models" / "Qwen3-4B-Instruct-2507"
-        # MODEL_PATH = "Qwen/Qwen2.5-7B-Instruct"
 
+        MODEL_PATH = "Qwen/Qwen2.5-7B-Instruct"
         self.model, self.tokenizer = get_model_and_tokenizer(str(MODEL_PATH))
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.eval()
@@ -155,8 +154,10 @@ class FunctionAgent:
 
         param_parts = []
         for p_name, p_info in function_info["parameters"].items():
+            type = p_info.get("type", "string")
             desc = p_info.get("description", "không có mô tả")
-            param_parts.append(f"- {p_name}: {desc}")
+            example = p_info.get("example", "không có")
+            param_parts.append(f"- {p_name} ({type}): {desc} (ví dụ: {example})")
 
         param_list = "\n".join(param_parts)
 

@@ -19,30 +19,45 @@ class Orchestrator:
 
     def resolve_params(self, fn, extracted_params, state):
         fn_info = self.agent.find_function(fn)
-
-        if (fn_info is None):
+        if fn_info is None:
             return {}, []
 
         valid_params = fn_info["parameters"].keys()
         required_params = fn_info.get("required", [])
 
-        # Chỉ dùng entity trong state nếu intent khớp
-        state_entities = {}
-        if isinstance(state, dict) and state.get("current_intent") == fn:
-            state_entities = state.get("entities", {})
+        # 1. Khởi tạo cấu trúc đầy đủ
+        final_params = {
+            "conditions": [],
+            "orders": [],
+            "limit": None
+        }
+        
+        # Tiền xử lý dữ liệu đầu vào
+        extracted_params = extracted_params if isinstance(extracted_params, dict) else {}
+        state_entities = state.get("entities", {}) if (isinstance(state, dict) and state.get("current_intent") == fn) else {}
 
-        final_params = {}
+        # --- XỬ LÝ CONDITIONS ---
+        extracted_conds = extracted_params.get("conditions", [])
+        state_conds = state_entities.get("conditions", [])
 
         for p in valid_params:
-            if extracted_params.get(p) is not None:
-                final_params[p] = extracted_params[p]
-            elif state_entities.get(p) is not None:
-                final_params[p] = state_entities[p]
+            match = next((c for c in extracted_conds if c.get("field") == p), None)
+            if not match:
+                match = next((c for c in state_conds if c.get("field") == p), None)
+            if match:
+                final_params["conditions"].append(match)
 
-        missing = [
-            p for p in required_params
-            if final_params.get(p) in (None, "", "None")
-        ]
+        # --- XỬ LÝ ORDERS ---
+        # Ưu tiên orders mới từ AI, nếu không có thì lấy từ state cũ
+        final_params["orders"] = extracted_params.get("orders") or state_entities.get("orders") or []
+
+        # --- XỬ LÝ LIMIT ---
+        # Ưu tiên limit mới, nếu không có lấy từ state, mặc định có thể là 10 hoặc None
+        final_params["limit"] = extracted_params.get("limit") or state_entities.get("limit")
+
+        # Kiểm tra tham số bắt buộc
+        final_fields = {c.get("field") for c in final_params["conditions"]}
+        missing = [p for p in required_params if p not in final_fields]
 
         return final_params, missing
 
@@ -59,24 +74,6 @@ class Orchestrator:
         self.state.add_user_message(user_query)
 
         history = self.state.conversation.get("history", [])
-
-        # DEMO
-
-        
-
-        # 1. Gọi LLM để ra quyết định
-        # llm_output = self.agent.demo(history[-3:-1], user_query)
-
-        # print("LLM Output: ", llm_output)
-
-        # if not llm_output:
-        #     # fallback nếu LLM lỗi
-        #     fn = "hoi_thoai_chung"
-        #     final_params = {}
-        # else:
-        #     fn = llm_output.get("function_name", "hoi_thoai_chung")
-        #     final_params = llm_output.get("parameters", {})
-
         # STEP 0: chuyển câu hỏi mới thành câu đơn nhất
 
         user_query = self.agent.rewrite_query(history[:-1], user_query)
@@ -128,6 +125,7 @@ class Orchestrator:
             "status": "ready" if not missing else "collecting"
         })
 
+        print("Final Params: ", final_params)
         print("Missing: ", missing)
 
         if missing:
@@ -176,25 +174,25 @@ class Orchestrator:
             desc = result.get("field_descriptions", {})
             function_name = fn
             data = result.get("data", [])
-
+            count_data = len(data)
             self.state.update_context(function_name, data)
 
-            data_lines = [
-                f"- {desc.get(k, k)}: {v}"
-                for k, v in result["data"].items()
-                if v not in (None, "", "None")
-            ]
-
-            lookup_text = "\n".join(data_lines)
+            lookup_text = ""
+            if isinstance(data, list) and count_data > 0:
+                all_items_text = []
+                # Có thể giới hạn data để tránh prompt dài
+                for item in data:
+                    lines = [
+                        f"- {desc.get(k, k)}: {v}"
+                        for k, v in item.items()
+                        if v not in (None, "", "None", 0, "0") # Loại bỏ thêm số 0 nếu cần
+                    ]
+                    all_items_text.append("\n".join(lines))
+                
+                lookup_text = "Tổng số kết quả: " + str(count_data) + "\n\n" + "\n\n---\n\n".join(all_items_text)
 
             # 👇 BỔ SUNG: xử lý suggestion templates với params
-            SUGGESTION_TEMPLATES = fn_info.get("suggestion_templates", [])
-            suggestions = SUGGESTION_TEMPLATES
-            # suggestions = [
-            #     tpl.format(**final_params)
-            #     for tpl in SUGGESTION_TEMPLATES
-            # ]
-
+            suggestions = fn_info.get("suggestion_templates", [])
             suggestion_templates = "\n".join(f"- {s}" for s in suggestions)
             max_tokens=1024
 

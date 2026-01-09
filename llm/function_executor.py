@@ -12,9 +12,12 @@ def execute_function(function_name: str, arguments: Dict[str, Any]) -> Dict[str,
 
     function_info = FUNCTION_REGISTRY.get(function_name)
     func = function_info["callable"]
+    parameters = function_info.get("parameters", {})
+    table_name = function_info.get("table_name", None)
+    hint = function_info.get("join", None)
 
     try:
-        result = func(arguments)
+        result = func(table_name, hint, parameters, arguments)
         return result
 
     except TypeError as e:

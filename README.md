@@ -1,101 +1,163 @@
-**Cài thư viện**
-Cài tất cả thư viện bằng cú pháp: pip install -r requirements.txt
+# Chatbot Quy Hoạch – Hướng dẫn cài đặt & chạy dự án
 
-**Chạy dự án trong môi trường ảo**
-Sử dụng câu lệnh: venv\Scripts\activate
+## 1. Yêu cầu hệ thống
 
-# Cài đặt geopandas
+- **Python**: 3.11
+- **Miniconda**
+- **PostgreSQL**
+- **Hệ điều hành**: Windows
 
+---
+
+## 2. Tạo và quản lý môi trường Conda
+
+### 2.1. Chấp nhận điều khoản Conda (chỉ làm 1 lần)
+
+```bash
+conda tos accept
+```
+
+### 2.2. Tạo môi trường mới
+
+```bash
+conda create -n chatbot_conda python=3.11 -y
+```
+
+### 2.3. Kích hoạt môi trường
+
+```bash
+conda activate chatbot_conda
+```
+
+### 2.4. Thoát môi trường
+
+```bash
+conda deactivate
+```
+
+### 2.5. Xóa môi trường (khi bị lỗi)
+
+```bash
+conda remove -n chatbot_conda --all -y
+```
+
+---
+
+## 3. Cài đặt thư viện nền tảng
+
+### 3.1. Cài đặt GeoPandas (GIS)
+
+```bash
 conda install geopandas
+```
 
-<!-- thư viện kết nối postgre và python -->
+### 3.2. Kết nối PostgreSQL với Python
 
+```bash
 conda install -c conda-forge psycopg2
+```
 
-# Bắt buộc: PyTorch CPU + Transformers
+---
 
+## 4. PyTorch & Transformers (bắt buộc)
+
+> Dùng **CPU** khi thiết bị không hỗ trợ GPU.
+
+```bash
 conda install pytorch cpuonly -c pytorch
 conda install -c conda-forge transformers
-
-<!-- pip install sentencepiece -->
-
 conda install -c conda-forge accelerate
+```
 
-torch → bắt buộc để load model và chạy inference (câu lệnh trên đang cài bản chạy trên cpu)
-transformers → để load model/tokenizer từ HuggingFace
+**Giải thích:**
 
-<!-- sentencepiece → cần nếu tokenizer của model dùng SP (đa số LLM nhỏ đều dùng) -->
+- `torch`: load model và chạy inference (CPU)
+- `transformers`: load model / tokenizer từ HuggingFace
+- `accelerate`: tự động map model sang CPU/GPU
 
-accelerate → để tự động map model sang CPU/GPU.
+---
 
-# Cài đặt LlamaIndex và Qdrant và mô hình để embedding
+## 5. LlamaIndex, Qdrant & Embedding
 
-<!-- pip install llama-index qdrant-client sentence-transformers -->
+### 5.1. Thư viện chính
 
-<!-- llama-index → một khung điều phối hoặc khung dữ liệu giúp đơn giản hóa việc xây dựng các ứng dụng LLM -->
-<!-- qdrant-client → một công cụ mạnh mẽ để tìm kiếm vectơ, tạo, chèn và tìm kiếm vectơ -->
-<!-- sentence-transformers → cung cấp các mô hình pre-trained để tạo ra embeddings cho các câu và đoạn văn -->
+```bash
+pip install llama-index qdrant-client sentence-transformers
+```
 
-# Cài đặt công cụ giữa LlamaIndex và Qdrant
+**Mô tả:**
 
-<!-- pip install llama-index-vector-stores-qdrant -->
+- `llama-index`: framework điều phối dữ liệu cho ứng dụng LLM
+- `qdrant-client`: cơ sở dữ liệu vector
+- `sentence-transformers`: tạo embedding cho câu và đoạn văn
 
-<!-- llama-index-vector-stores-qdrant -> kết nối và tương tác giữa LlamaIndex và cơ sở dữ liệu vector Qdrant -->
+### 5.2. Kết nối LlamaIndex với Qdrant
 
-#
+```bash
+pip install llama-index-vector-stores-qdrant
+```
 
-đoạn code ở demo1 đang thiết vì tôi đã xóa, đang tính chuyển sang SentenceTransformer thay vì dùng HuggingFace
+---
+
+## 6. Embedding Model
+
+```bash
 pip install llama-index-embeddings-huggingface
+```
 
-# cài đặt fastapi và uvicorn
+---
 
+## 7. FastAPI & Uvicorn
+
+### 7.1. Cài đặt
+
+```bash
 conda install -c conda-forge fastapi uvicorn
-fastapi -> tạo api
-uvicorn -> server để chạy fastapi
+```
 
-# chạy uvicorn - server cho pastAPI
+**Giải thích:**
 
+- `fastapi`: xây dựng REST API
+- `uvicorn`: ASGI server để chạy FastAPI
+
+### 7.2. Chạy server
+
+```bash
 uvicorn app.api:app --reload
-!uvicorn app.api:app --host 0.0.0.0 --port 8000
+```
 
-##
+Hoặc chạy public IP:
 
-# tổng hợp thư viện của project vào file requirements.txt
+```bash
+uvicorn app.api:app --host 0.0.0.0 --port 8000
+```
 
-pip freeze > requirements.txt
+---
 
-# khi chuyển sang máy khác thì cài thư viện trong file requirements.txt
+## 8. Quản lý thư viện với Conda
 
-pip install -r requirements.txt
+### 8.1. Xuất danh sách thư viện ra environment.yml
 
-# Minianaconda - sau khi cài xong thì làm các bước sau để tạo môi trường
+```bash
+conda env export --no-builds > environment.yml
+```
 
-1.  Chấp nhận điều khoản (ToS): conda tos accept
+> File `environment.yml` sẽ bao gồm:
+>
+> - Phiên bản Python
+> - Danh sách thư viện Conda
+> - Các gói cài bằng `pip`
 
-2.  Tạo môi trường mới (dùng bản 3.10 hoặc 3.11 cho ổn định): conda create -n chatbot_conda python=3.11 -y
+### 8.2. Cài lại môi trường trên máy khác từ environment.yml
 
-3.  Kích hoạt môi trường: conda activate chatbot_conda
+```bash
+conda env create -f environment.yml
+```
 
-# Thoát khỏi môi trường hiện tại
+Sau đó kích hoạt môi trường:
 
-conda deactivate
-
-# Xóa sổ môi trường bị lỗi
-
-conda remove -n chatbot_conda --all -y
-
-# Tạo lại môi trường mới tinh với Python 3.11
-
-conda create -n chatbot_conda python=3.11 -y
-
-# Kích hoạt lại
-
+```bash
 conda activate chatbot_conda
+```
 
-# Kích hoạt 2 extention trong pg
-
--- 1. Cho phép xóa dấu tiếng Việt
-CREATE EXTENSION IF NOT EXISTS unaccent;
-
--- 2. Cho phép tìm kiếm theo độ tương đồng (Trigram)
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
+---
