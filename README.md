@@ -1,4 +1,4 @@
-# Chatbot Quy Hoạch – Hướng dẫn cài đặt & chạy dự án
+# Chatbot Thủy Lợi – Hướng dẫn cài đặt & chạy dự án
 
 ## 1. Yêu cầu hệ thống
 
