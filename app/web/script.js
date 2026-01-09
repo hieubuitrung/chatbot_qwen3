@@ -1,6 +1,6 @@
 $(document).ready(function () {
   let attachments = [];
-  const domain = "https://ce33a14d2d8d.ngrok-free.app/";
+  const domain = "https://b059fb4c47af.ngrok-free.app/";
   // Mở/đóng popup
   $("#chatButton").on("click", function () {
     $("#chatPopup").toggleClass("active");

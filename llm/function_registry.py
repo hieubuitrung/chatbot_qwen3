@@ -36,7 +36,7 @@ def _make_success(data: Dict[str, Any], field_descriptions: Dict[str, str] = Non
         resp["field_descriptions"] = field_descriptions
     return resp
 
-def hoi_dap_chung(des_result, json: dict):
+def hoi_dap_chung(table_name, hints, parameters, params_json: dict):
     return {"status": "normal"}
 
 def execute_select_query(query: str, values: tuple = ()):
