@@ -110,9 +110,9 @@ def build_query(base_query, params_json):
     
     if limit:
         query += " LIMIT %s"
-        values.append(limit > 20 and 20 or limit)  # Giới hạn tối đa 20 bản ghi
+        values.append(limit > 10 and 10 or limit)  # Giới hạn tối đa 20 bản ghi
     else :
-        query += " LIMIT 20"  # Mặc định giới hạn 20 bản ghi nếu không có limit
+        query += " LIMIT 10"  # Mặc định giới hạn 20 bản ghi nếu không có limit
 
     return query, tuple(values)
 
