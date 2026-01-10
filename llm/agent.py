@@ -190,24 +190,6 @@ class FunctionAgent:
         result["function"] = fn
         return result
     
-    def demo(self, history, user_query: str):
-        """
-        Hàm demo quy trình xử lý yêu cầu từ user.
-        """
-        messages = [{"role": "system", "content": SYSTEM_PROMPT["demo"]}]
-        messages.extend(history)  # history đã có định dạng đúng
-        messages.append({"role": "user", "content": user_query})
-
-        print("Step 1 messages: ", messages)
-
-        result = self.llm_generate(
-            messages,
-            max_tokens=256,      # đủ cho JSON output (~100–200 token)
-        )
-        
-        return self.safe_parse_json(result)
-
-
     # -----------------------------------------
     # Hàm stream trả lời từ LLM
     # -----------------------------------------
@@ -215,12 +197,19 @@ class FunctionAgent:
         # Reset cờ stop trong state
         state_dict = state_manager.get()
         state_dict["stop"] = False
+
+        recent_history = state_manager.conversation["history"][-5:-1]
+        history_str = ""
+        for msg in recent_history:
+            role_label = "Người dùng" if msg["role"] == "user" else "Trợ lý"
+            history_str += f"{role_label}: {msg['content']}\n"
         
-        recent_history = state_manager.conversation["history"][-4:]
-        messages = [{"role": "system", "content": system_prompt},
-                    *recent_history,
-                    # {"role": "user", "content": user_query}
-                    ]
+        new_user_input = state_manager.conversation["history"][-1]["content"]
+        user_content = f"--- LỊCH SỬ TRÒ CHUYỆN ---\n{history_str}\n\n--- CÂU HỎI MỚI NHẤT ---\n{new_user_input}"
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_content}
+        ]
 
         print("Messages step 3: ", messages)
         tokenized = self.tokenizer.apply_chat_template(

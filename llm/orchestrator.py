@@ -89,7 +89,7 @@ class Orchestrator:
 
         # Không có function phù hợp → chỉ chat bình thường
         if not fn or fn == "none" or is_fn is None:
-            full_answer = "Xin lỗi, nhưng câu hỏi của bạn không thuộc phạm vi trách nhiệm của tôi. Nếu bạn cần hỗ trợ về lĩnh vực quy hoạch của tỉnh Khánh Hòa, hãy cho tôi biết!"
+            full_answer = "Xin lỗi, nhưng câu hỏi của bạn không thuộc phạm vi trách nhiệm của tôi. Nếu bạn cần hỗ trợ về lĩnh vực thủy lợi, hãy cho tôi biết!"
             self.state.add_assistant_message(full_answer)
             return full_answer
 
