@@ -174,7 +174,7 @@ class Orchestrator:
             desc = result.get("field_descriptions", {})
             function_name = fn
             data = result.get("data", [])
-            count_data = len(data)
+            count_data = result.get("count", None)
             self.state.update_context(function_name, data)
 
             lookup_text = ""
@@ -189,7 +189,7 @@ class Orchestrator:
                     ]
                     all_items_text.append("\n".join(lines))
                 
-                lookup_text = "Tổng số kết quả: " + str(count_data) + "\n\n" + "\n\n---\n\n".join(all_items_text)
+                lookup_text = f"Tìm thấy tổng cộng {count_data} kết quả.\nDưới đây là {len(data)}/{count_data} kết quả." + "\n\n" + "\n\n---\n\n".join(all_items_text)
 
             # 👇 BỔ SUNG: xử lý suggestion templates với params
             suggestions = fn_info.get("suggestion_templates", [])

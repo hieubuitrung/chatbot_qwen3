@@ -20,16 +20,21 @@ def get_model_and_tokenizer(model_path: str) -> Tuple[AutoModelForCausalLM, Auto
     """
     global _model, _tokenizer, _loaded_model_path
 
-    model_path = str(Path(model_path).expanduser())
+    is_local = Path(model_path).exists()
+    resolved_path = (
+        Path(model_path).expanduser().resolve()
+        if is_local
+        else model_path
+    )
 
-    if _model is not None and _tokenizer is not None and _loaded_model_path == model_path:
+    if _model is not None and _tokenizer is not None and _loaded_model_path == resolved_path:
         return _model, _tokenizer
 
-    print(f"Đang tải model/tokenizer từ: {model_path}")
+    print(f"Đang tải model/tokenizer từ: {resolved_path}")
 
     # Tokenizer
     _tokenizer = AutoTokenizer.from_pretrained(
-        model_path,
+        resolved_path,
         trust_remote_code=False,
         use_fast=True
     )
@@ -41,7 +46,7 @@ def get_model_and_tokenizer(model_path: str) -> Tuple[AutoModelForCausalLM, Auto
     device_map = "auto" if has_cuda else "cpu"
 
     _model = AutoModelForCausalLM.from_pretrained(
-        model_path,
+        resolved_path,
         device_map=device_map,
         torch_dtype=torch.float16 if has_cuda else torch.float32,
         low_cpu_mem_usage=not has_cuda,
@@ -49,7 +54,7 @@ def get_model_and_tokenizer(model_path: str) -> Tuple[AutoModelForCausalLM, Auto
     )
 
     _model.eval()
-    _loaded_model_path = model_path
+    _loaded_model_path = resolved_path
 
     print("✅ Model và tokenizer đã sẵn sàng.")
     return _model, _tokenizer

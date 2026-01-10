@@ -73,6 +73,7 @@ Nhiệm vụ: Trích xuất các thành phần sau:
 2. orders: Danh sách các quy tắc sắp xếp (ORDER BY).
    - "asc" (tăng dần) hoặc "desc" (giảm dần).
 3. limit: Số lượng kết quả tối đa (LIMIT). Nếu không nói gì, mặc định null.
+4. offset: Vị trí bắt đầu lấy bản ghi (dùng để xem trang sau).
 
 Quy tắc:
 - Chỉ trích xuất thông tin có trong câu hỏi.
@@ -80,7 +81,7 @@ Quy tắc:
 - KHÔNG giải thích, chỉ trả JSON.
 
 Định dạng đầu ra:
-{{"conditions": [{{"field": "...", "operator": "...", "value": ...}}], "orders": [{{"field": "...", "direction": "asc|desc"}}], "limit": null|number}}
+{{"conditions": [{{"field": "...", "operator": "...", "value": ...}}], "orders": [{{"field": "...", "direction": "asc|desc"}}], "limit": null|number, "offset": null|number}}
 """
 
 USER_ANSWER_PROMPT = {

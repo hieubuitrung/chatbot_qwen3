@@ -24,7 +24,7 @@ class FunctionAgent:
         """
 
         MODEL_PATH = "Qwen/Qwen3-4B-Instruct-2507"
-        self.model, self.tokenizer = get_model_and_tokenizer(str(MODEL_PATH))
+        self.model, self.tokenizer = get_model_and_tokenizer(MODEL_PATH)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.eval()
 

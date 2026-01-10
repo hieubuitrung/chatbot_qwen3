@@ -30,8 +30,8 @@ DB_CONFIG = {
 def _make_error(msg: str) -> Dict[str, Any]:
     return {"status": "error", "message": msg}
 
-def _make_success(data: Dict[str, Any], field_descriptions: Dict[str, str] = None) -> Dict[str, Any]:
-    resp = {"status": "success", "data": data}
+def _make_success(count_result, data: Dict[str, Any], field_descriptions: Dict[str, str] = None) -> Dict[str, Any]:
+    resp = {"status": "success", "data": data, "count": count_result}
     if field_descriptions:
         resp["field_descriptions"] = field_descriptions
     return resp
@@ -110,7 +110,8 @@ def build_query(base_query, params_json):
     
     if limit:
         query += " LIMIT %s"
-        values.append(limit)
+        values.append(limit > 20 and 20 or limit)  # Giới hạn tối đa 20 bản ghi
+    
 
     return query, tuple(values)
 
@@ -143,26 +144,34 @@ def tra_cuu_cong_trinh(table_name, hints, parameters, params_json: dict):
     base_query = f"SELECT {', '.join(cols)} FROM {table_name} {joins_sql}"
     # 1. Gọi hàm xây dựng query
     query, values = build_query(base_query, params_json)
+
+    limit = params_json.get("limit", None)
+    count_data = limit
+    if not limit:
+        count_query = f"SELECT COUNT(*) FROM {table_name} {joins_sql}"
+        query_count, values_count = build_query(count_query, {"conditions": params_json.get("conditions", [])})
+        count_result = execute_select_query(query_count, values_count)
+        data_list = count_result.get("data", [])
+        count_data = data_list[0].get('count', None)
+
+    print("DEBUG - Count:", count_data)
+    print("DEBUG - Query:", query, query_count)
+    print("DEBUG - Values:", values, values_count)
     
-    print("DEBUG - Query:", query)
-    print("DEBUG - Values:", values)
-    # 2. Nếu không có điều kiện, trả về 1 bản ghi
-    if not values:
-        query += " LIMIT 1"
-    else:
-        query += " LIMIT 10"
         
     # 3. Gọi hàm thực thi dùng chung
     result = execute_select_query(query, values)
+    
     
     # nếu có lỗi xảy ra khi truy xuất DB
     if (result.get("ok") is False):
         return _make_error("Hệ thống đang tạm thời gián đoạn, chưa thể truy xuất dữ liệu do sự cố kỹ thuật ngoài ý muốn.\nVui lòng thử lại sau ít phút hoặc quay lại sau.")
     
     data = result.get("data", [])
+    
     clean_objects = [dict(row) for row in data] if data else []
-
-    return _make_success(clean_objects, field_descriptions)
+    
+    return _make_success(count_data, clean_objects, field_descriptions)
 
 
 
